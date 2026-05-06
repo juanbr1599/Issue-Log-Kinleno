@@ -4,10 +4,433 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Maintenance Log</title>
+  <meta name="theme-color" content="#111827" />
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    .app {
+      max-width: 900px;
+      margin: auto;
+      padding: 18px;
+    }
+
+    h1 { margin: 8px 0 4px; font-size: 28px; }
+    h2 { margin-top: 0; }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 15px;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .buttons, .tabs, .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .start { background: #22c55e; color: #052e16; }
+    .finish { background: #f97316; color: #431407; }
+    .secondary { background: #334155; color: #e5e7eb; }
+    .danger { background: #dc2626; color: white; }
+    .tab { background: #1e293b; color: #e5e7eb; }
+    .tab.active { background: #2563eb; }
+    .hidden { display: none; }
+
+    .status-line, .summary {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #020617;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+    }
+
+    .log {
+      border-bottom: 1px solid #334155;
+      padding: 12px 0;
+    }
+
+    .log:last-child { border-bottom: none; }
+
+    .log-title {
+      font-weight: bold;
+      font-size: 16px;
+      color: #f8fafc;
+    }
+
+    .log-meta {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #1e293b;
+      color: #cbd5e1;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 600px) {
+      .buttons, .tabs, .row { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Maintenance Log App</h1>
-  <p>Archivo generado correctamente.</p>
-  <p>Usa la versión completa del canvas para el código completo.</p>
+  <div class="app">
+    <h1>Maintenance Log</h1>
+    <div class="subtitle">Registro rápido de actividades de mantenimiento</div>
+
+    <div class="tabs">
+      <button id="tabRegistro" class="tab active" onclick="showSection('registro')">Registro</button>
+      <button id="tabCalendario" class="tab" onclick="showSection('calendario')">Calendario / Logs por día</button>
+    </div>
+
+    <section id="registroSection">
+      <div class="card">
+        <label>Máquina / equipo</label>
+        <input id="machine" placeholder="Ej. CNC Okuma, soldadora, polipasto" />
+
+        <label>Actividad</label>
+        <input id="activity" placeholder="Ej. Diagnóstico de alarma, cambio de sensor" />
+
+        <div class="row">
+          <div>
+            <label>Hora inicial automática</label>
+            <input id="startTime" readonly />
+          </div>
+          <div>
+            <label>Hora final automática</label>
+            <input id="endTime" readonly />
+          </div>
+        </div>
+
+        <label>Duración automática</label>
+        <input id="duration" readonly />
+
+        <label>Estado</label>
+        <select id="status">
+          <option value="En proceso">En proceso</option>
+          <option value="Terminado">Terminado</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Requiere refacción">Requiere refacción</option>
+          <option value="Escalado">Escalado</option>
+        </select>
+
+        <label>Notas</label>
+        <textarea id="notes" placeholder="Detalles, causa encontrada, refacciones, recomendaciones..."></textarea>
+
+        <div class="buttons">
+          <button class="start" onclick="startActivity()">Iniciar actividad</button>
+          <button class="finish" onclick="finishActivity()">Finalizar actividad</button>
+        </div>
+
+        <div class="buttons">
+          <button class="secondary" onclick="exportLogs()">Exportar registros</button>
+          <button class="danger" onclick="clearAllLogs()">Borrar todo</button>
+        </div>
+
+        <div id="currentStatus" class="status-line">Sin actividad activa.</div>
+      </div>
+
+      <div class="card">
+        <h2>Registros recientes</h2>
+        <div id="recentLogs"></div>
+      </div>
+    </section>
+
+    <section id="calendarSection" class="hidden">
+      <div class="card">
+        <h2>Logs por día</h2>
+
+        <label>Selecciona fecha</label>
+        <input type="date" id="selectedDate" onchange="renderLogsByDate()" />
+
+        <div id="daySummary" class="summary">Selecciona una fecha para ver los registros.</div>
+        <div id="dayLogs"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let activeLog = JSON.parse(localStorage.getItem('activeLog')) || null;
+    let logs = JSON.parse(localStorage.getItem('maintenanceLogs')) || [];
+
+    const machineInput = document.getElementById('machine');
+    const activityInput = document.getElementById('activity');
+    const startTimeInput = document.getElementById('startTime');
+    const endTimeInput = document.getElementById('endTime');
+    const durationInput = document.getElementById('duration');
+    const statusInput = document.getElementById('status');
+    const notesInput = document.getElementById('notes');
+    const currentStatus = document.getElementById('currentStatus');
+
+    function saveData() {
+      localStorage.setItem('maintenanceLogs', JSON.stringify(logs));
+      localStorage.setItem('activeLog', JSON.stringify(activeLog));
+    }
+
+    function formatDateTime(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleString('es-MX', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    function getDateKey(dateString) {
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatDuration(ms) {
+      const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      if (hours === 0) return `${minutes} min`;
+      return `${hours} h ${minutes} min`;
+    }
+
+    function showSection(section) {
+      const registro = document.getElementById('registroSection');
+      const calendario = document.getElementById('calendarSection');
+      const tabRegistro = document.getElementById('tabRegistro');
+      const tabCalendario = document.getElementById('tabCalendario');
+
+      if (section === 'registro') {
+        registro.classList.remove('hidden');
+        calendario.classList.add('hidden');
+        tabRegistro.classList.add('active');
+        tabCalendario.classList.remove('active');
+      } else {
+        registro.classList.add('hidden');
+        calendario.classList.remove('hidden');
+        tabRegistro.classList.remove('active');
+        tabCalendario.classList.add('active');
+        renderLogsByDate();
+      }
+    }
+
+    function startActivity() {
+      if (!machineInput.value.trim() || !activityInput.value.trim()) {
+        alert('Captura máquina/equipo y actividad antes de iniciar.');
+        return;
+      }
+
+      if (activeLog) {
+        alert('Ya hay una actividad activa. Finalízala antes de iniciar otra.');
+        return;
+      }
+
+      const now = new Date();
+      activeLog = {
+        id: Date.now(),
+        machine: machineInput.value.trim(),
+        activity: activityInput.value.trim(),
+        start: now.toISOString(),
+        end: null,
+        durationMs: 0,
+        status: 'En proceso',
+        notes: notesInput.value.trim()
+      };
+
+      startTimeInput.value = formatDateTime(activeLog.start);
+      endTimeInput.value = '';
+      durationInput.value = '';
+      statusInput.value = 'En proceso';
+      saveData();
+      updateCurrentStatus();
+    }
+
+    function finishActivity() {
+      if (!activeLog) {
+        alert('No hay actividad activa para finalizar.');
+        return;
+      }
+
+      const now = new Date();
+      activeLog.end = now.toISOString();
+      activeLog.durationMs = new Date(activeLog.end) - new Date(activeLog.start);
+      activeLog.status = statusInput.value === 'En proceso' ? 'Terminado' : statusInput.value;
+      activeLog.notes = notesInput.value.trim();
+
+      logs.unshift(activeLog);
+      activeLog = null;
+      saveData();
+
+      machineInput.value = '';
+      activityInput.value = '';
+      notesInput.value = '';
+      startTimeInput.value = '';
+      endTimeInput.value = '';
+      durationInput.value = '';
+      statusInput.value = 'En proceso';
+
+      renderRecentLogs();
+      updateCurrentStatus();
+      renderLogsByDate();
+    }
+
+    function updateCurrentStatus() {
+      if (!activeLog) {
+        currentStatus.textContent = 'Sin actividad activa.';
+        return;
+      }
+
+      currentStatus.textContent = `Actividad activa: ${activeLog.machine} - ${activeLog.activity}. Inicio: ${formatDateTime(activeLog.start)}`;
+    }
+
+    function renderLogItem(log) {
+      return `
+        <div class="log">
+          <div class="log-title">${log.machine} — ${log.activity}</div>
+          <div class="log-meta">
+            Inicio: ${formatDateTime(log.start)}<br>
+            Final: ${formatDateTime(log.end)}<br>
+            Duración: ${formatDuration(log.durationMs)}
+          </div>
+          <span class="badge">${log.status}</span>
+          ${log.notes ? `<div class="log-meta">Notas: ${log.notes}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderRecentLogs() {
+      const container = document.getElementById('recentLogs');
+      if (logs.length === 0) {
+        container.innerHTML = '<div class="log-meta">Aún no hay registros.</div>';
+        return;
+      }
+      container.innerHTML = logs.slice(0, 10).map(renderLogItem).join('');
+    }
+
+    function renderLogsByDate() {
+      const selectedDateInput = document.getElementById('selectedDate');
+      const dayLogs = document.getElementById('dayLogs');
+      const daySummary = document.getElementById('daySummary');
+
+      if (!selectedDateInput.value) {
+        selectedDateInput.value = getDateKey(new Date().toISOString());
+      }
+
+      const selectedDate = selectedDateInput.value;
+      const filteredLogs = logs.filter(log => getDateKey(log.start) === selectedDate);
+      const totalMs = filteredLogs.reduce((sum, log) => sum + (log.durationMs || 0), 0);
+
+      daySummary.innerHTML = `
+        Fecha: <strong>${selectedDate}</strong><br>
+        Actividades registradas: <strong>${filteredLogs.length}</strong><br>
+        Tiempo total: <strong>${formatDuration(totalMs)}</strong>
+      `;
+
+      if (filteredLogs.length === 0) {
+        dayLogs.innerHTML = '<div class="log-meta" style="margin-top:12px;">No hay actividades registradas este día.</div>';
+        return;
+      }
+
+      dayLogs.innerHTML = filteredLogs.map(renderLogItem).join('');
+    }
+
+    function exportLogs() {
+      if (logs.length === 0) {
+        alert('No hay registros para exportar.');
+        return;
+      }
+
+      const header = ['Fecha', 'Máquina/Equipo', 'Actividad', 'Inicio', 'Final', 'Duración', 'Estado', 'Notas'];
+      const rows = logs.map(log => [
+        getDateKey(log.start),
+        log.machine,
+        log.activity,
+        formatDateTime(log.start),
+        formatDateTime(log.end),
+        formatDuration(log.durationMs),
+        log.status,
+        log.notes || ''
+      ]);
+
+      const csv = [header, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'maintenance-log.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearAllLogs() {
+      if (!confirm('¿Seguro que quieres borrar todos los registros?')) return;
+      logs = [];
+      activeLog = null;
+      localStorage.removeItem('maintenanceLogs');
+      localStorage.removeItem('activeLog');
+      renderRecentLogs();
+      renderLogsByDate();
+      updateCurrentStatus();
+    }
+
+    renderRecentLogs();
+    updateCurrentStatus();
+  </script>
 </body>
 </html>
