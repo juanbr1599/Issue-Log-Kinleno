@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Maintenance Log</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Maintenance Log</h1>
+      <p>Registro rápido de actividades de mantenimiento</p>
+    </div>
+    <button id="installBtn" hidden>Instalar</button>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Nueva actividad</h2>
+
+      <label>Equipo / Máquina
+        <input id="equipment" placeholder="Ej. Okuma MB-5000H">
+      </label>
+
+      <label>Actividad / Problema
+        <input id="activity" placeholder="Ej. Revisión alarma ATC">
+      </label>
+
+      <label>Notas
+        <textarea id="notes" placeholder="Causa, acción realizada, refacciones, pendientes..."></textarea>
+      </label>
+
+      <label>Estado
+        <select id="status">
+          <option>Abierto</option>
+          <option>En proceso</option>
+          <option>Cerrado</option>
+          <option>Pendiente</option>
+        </select>
+      </label>
+
+      <div class="timer">
+        <div>
+          <span>Inicio</span>
+          <strong id="startDisplay">--:--</strong>
+        </div>
+        <div>
+          <span>Fin</span>
+          <strong id="endDisplay">--:--</strong>
+        </div>
+        <div>
+          <span>Duración</span>
+          <strong id="durationDisplay">0 min</strong>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="startBtn">Iniciar</button>
+        <button id="finishBtn" disabled>Finalizar y guardar</button>
+        <button id="clearBtn" class="secondary">Limpiar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Registros</h2>
+        <div>
+          <button id="exportBtn" class="secondary">Exportar CSV</button>
+          <button id="deleteAllBtn" class="danger">Borrar todo</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <input id="search" placeholder="Buscar por equipo o actividad">
+        <select id="filterStatus">
+          <option value="">Todos</option>
+          <option>Abierto</option>
+          <option>En proceso</option>
+          <option>Cerrado</option>
+          <option>Pendiente</option>
+        </select>
+      </div>
+
+      <div id="logList" class="log-list"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
